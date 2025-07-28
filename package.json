@@ -1,0 +1,57 @@
+{
+  "name": "better-loyalty",
+  "version": "1.0.0",
+  "description": "Un framework declarativo para modelar y ejecutar la lógica de negocio de la fidelización de clientes, agnóstico a la tecnología y al dominio de la aplicación.",
+  "author": "Eijun <eijunxd12@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EijunnnN/better-loyalty.git"
+  },
+  "keywords": [
+    "loyalty",
+    "fidelizacion",
+    "rewards",
+    "puntos",
+    "tiers",
+    "customer-loyalty",
+    "rule-engine",
+    "gamification"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "pnpm build --watch",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "format": "prettier --write \"src/**/*.ts*\" \"test/**/*.ts*\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
+    "mitt": "^3.0.1",
+    "prettier": "^3.1.1",
+    "typescript": "^5.8.3",
+    "tsup": "^8.5.0",
+    "vitest": "^1.0.4"
+  },
+  "dependencies": {
+    "mitt": "^3.0.1"
+  }
+}
