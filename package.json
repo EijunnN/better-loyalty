@@ -1,7 +1,7 @@
 {
   "name": "better-loyalty",
   "version": "1.0.0",
-  "description": "Un framework declarativo para modelar y ejecutar la lógica de negocio de la fidelización de clientes, agnóstico a la tecnología y al dominio de la aplicación.",
+  "description": "A declarative framework for modeling and executing customer engagement business logic, agnostic to technology and application domain.",
   "author": "Eijun <eijunxd12@gmail.com>",
   "license": "MIT",
   "repository": {
