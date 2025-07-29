@@ -4,16 +4,16 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/tu-usuario/better-loyalty/main.yml?branch=main)](https://github.com/tu-usuario/better-loyalty/actions)
 [![License](https://img.shields.io/npm/l/better-loyalty.svg)](https://github.com/tu-usuario/better-loyalty/blob/main/LICENSE)
 
-Un framework declarativo para modelar y ejecutar la lógica de negocio de la fidelización de clientes, totalmente agnóstico a la tecnología y al dominio de la aplicación.
+A declarative framework for modeling and executing customer loyalty business logic, completely agnostic to technology and application domain.
 
-Con `better-loyalty`, dejas de escribir lógica de lealtad dispersa en tu código. En su lugar, defines las reglas de tu negocio y dejas que el framework orqueste el resto.
+With `better-loyalty`, you stop writing scattered loyalty logic in your code. Instead, you define your business rules and let the framework orchestrate the rest.
 
-## La Filosofía: De Imperativo a Declarativo
+## The Philosophy: From Imperative to Declarative
 
-El enfoque tradicional te obliga a escribir código como este en toda tu aplicación:
+The traditional approach forces you to write code like this throughout your application:
 
 ```typescript
-// El modo tradicional 👎
+// The traditional way 👎
 if (userCompletedPurchase) {
   const points = calculatePoints(purchase.amount);
   await loyaltyService.addPoints(user.id, points);
@@ -24,62 +24,67 @@ if (userCompletedPurchase) {
 }
 ```
 
-Con `better-loyalty`, tu lógica de negocio vive fuera de tus controladores. Es limpia, centralizada y declarativa:
+With `better-loyalty`, your business logic lives outside your controllers. It's clean, centralized, and declarative:
 
 ```typescript
-// El modo better-loyalty 👍
+// The better-loyalty way 👍
 loyaltySystem.processEvent({
   userId: 'user-123',
   event: 'purchase_completed',
-  payload: { amount: 120, items: ['book', 'pen'] }
+  payload: { amount: 120, items: ['book', 'pen'] },
 });
 ```
 
-## Características Principales
+## Key Features
 
--   🚀 **Motor de Reglas Declarativo**: Define la lógica de tu negocio (ej: "otorgar 100 puntos por compras > $50") en una configuración simple.
--   🔌 **Agnóstico a la Base de Datos**: Conecta tu propia base de datos (PostgreSQL, MongoDB, Firebase, etc.) implementando una interfaz `IDatabaseAdapter` simple y limpia.
--   ⚛️ **Sistema de Eventos Reactivo**: Suscríbete a eventos como `tier_changed` o `points_updated` para disparar notificaciones, enviar emails o actualizar la UI.
--   🔒 **TypeScript de Primer Nivel**: Framework escrito 100% en TypeScript, con genéricos para una seguridad de tipos total en tus payloads de eventos.
--   ✨ **Cero Dependencias de Producción (casi)**: Ultraligero. Solo `mitt` para el emisor de eventos.
+- 🚀 **Declarative Rule Engine**: Define your business logic (e.g., "award 100 points for purchases > $50") in simple configuration.
+- 🔌 **Database Agnostic**: Connect your own database (PostgreSQL, MongoDB, Firebase, etc.) by implementing a simple and clean `IDatabaseAdapter` interface.
+- ⚛️ **Reactive Event System**: Subscribe to events like `tier_changed` or `points_updated` to trigger notifications, send emails, or update the UI.
+- 🔒 **First-Class TypeScript**: Framework written 100% in TypeScript, with generics for complete type safety in your event payloads.
+- ✨ **Zero Production Dependencies (almost)**: Ultralight. Only `mitt` for the event emitter.
 
-## Instalación
+## Installation
 
 ```bash
-# Con pnpm
+# With pnpm
 pnpm add better-loyalty
 
-# Con npm
+# With npm
 npm install better-loyalty
 
-# Con yarn
+# With yarn
 yarn add better-loyalty
 ```
 
-## Guía de Inicio Rápido
+## Quick Start Guide
 
-Vamos a crear un sistema de lealtad funcional en 3 pasos.
+Let's create a functional loyalty system in 3 steps.
 
-### Paso 1: Implementa el `IDatabaseAdapter`
+### Step 1: Implement the `IDatabaseAdapter`
 
-`better-loyalty` no sabe nada de tu base de datos. Debes enseñarle a comunicarse implementando una interfaz. Aquí tienes un ejemplo simple usando un objeto en memoria (en una app real, usarías Prisma, Mongoose, TypeORM, etc.).
+`better-loyalty` knows nothing about your database. You must teach it to communicate by implementing an interface. Here's a simple example using an in-memory object (in a real app, you'd use Prisma, Mongoose, TypeORM, etc.).
 
 ```typescript
 // src/myAdapter.ts
-import { 
-  IDatabaseAdapter, 
-  UserLoyaltyProfile, 
-  Tier, 
-  UserId 
+import {
+  IDatabaseAdapter,
+  UserLoyaltyProfile,
+  Tier,
+  UserId,
 } from 'better-loyalty';
 
-// Simulación de una base de datos en memoria para el ejemplo
+// Simulation of an in-memory database for the example
 const db = {
   users: new Map<UserId, UserLoyaltyProfile>(),
   tiers: [
-    { id: 'bronze', name: 'Bronce', minPoints: 0, benefits: [] },
-    { id: 'silver', name: 'Plata', minPoints: 500, benefits: ['free_shipping'] },
-    { id: 'gold', name: 'Oro', minPoints: 2000, benefits: ['early_access'] },
+    { id: 'bronze', name: 'Bronze', minPoints: 0, benefits: [] },
+    {
+      id: 'silver',
+      name: 'Silver',
+      minPoints: 500,
+      benefits: ['free_shipping'],
+    },
+    { id: 'gold', name: 'Gold', minPoints: 2000, benefits: ['early_access'] },
   ],
 };
 
@@ -97,15 +102,15 @@ export const myDbAdapter: IDatabaseAdapter = {
 };
 ```
 
-### Paso 2: Define tus Reglas de Lealtad
+### Step 2: Define Your Loyalty Rules
 
-Este es el corazón del framework. Define qué eventos de tu aplicación deben generar puntos. Gracias a los genéricos, ¡obtendrás seguridad de tipo en tus `payloads`!
+This is the heart of the framework. Define which events in your application should generate points. Thanks to generics, you'll get complete type safety in your `payloads`!
 
 ```typescript
 // src/loyaltyRules.ts
 import { LoyaltyRule } from 'better-loyalty';
 
-// Define los tipos de payload para tus eventos
+// Define payload types for your events
 interface PurchasePayload {
   amount: number;
   category: 'electronics' | 'books' | 'other';
@@ -116,32 +121,33 @@ interface ReviewPayload {
   textLength: number;
 }
 
-// Crea tu array de reglas
+// Create your rules array
 export const myRules: LoyaltyRule<any>[] = [
   {
-    name: 'Puntos por compra',
+    name: 'Points for purchase',
     event: 'purchase_completed',
     condition: (ctx: { payload: PurchasePayload }) => ctx.payload.amount > 10,
     action: (ctx: { payload: PurchasePayload }) => ({
       points: Math.floor(ctx.payload.amount),
-      actionName: `Compra de $${ctx.payload.amount}`,
+      actionName: `Purchase of $${ctx.payload.amount}`,
     }),
   },
   {
-    name: 'Bonus por reseña de calidad',
+    name: 'Bonus for quality review',
     event: 'review_created',
-    condition: (ctx: { payload: ReviewPayload }) => ctx.payload.rating >= 4 && ctx.payload.textLength > 50,
+    condition: (ctx: { payload: ReviewPayload }) =>
+      ctx.payload.rating >= 4 && ctx.payload.textLength > 50,
     action: () => ({
       points: 50,
-      actionName: 'Reseña de calidad',
+      actionName: 'Quality review',
     }),
   },
 ];
 ```
 
-### Paso 3: Inicializa, Procesa Eventos y Reacciona
+### Step 3: Initialize, Process Events, and React
 
-Ahora, junta todo en la lógica de tu aplicación.
+Now, put it all together in your application logic.
 
 ```typescript
 // src/main.ts
@@ -149,31 +155,34 @@ import { BetterLoyalty } from 'better-loyalty';
 import { myDbAdapter } from './myAdapter';
 import { myRules } from './loyaltyRules';
 
-// 1. Inicializa el sistema
+// 1. Initialize the system
 const loyaltySystem = new BetterLoyalty(myDbAdapter, myRules);
 const userId = 'customer-007';
 
-// 2. Suscríbete a eventos para reaccionar
+// 2. Subscribe to events to react
 loyaltySystem.on('tier_changed', ({ userId, to }) => {
-  console.log(`🎉 ¡Felicidades, ${userId}! Has ascendido al nivel ${to?.name}!`);
-  // Aquí podrías enviar un email, una notificación push, etc.
+  console.log(
+    `🎉 Congratulations, ${userId}! You've ascended to ${to?.name} level!`,
+  );
+  // Here you could send an email, push notification, etc.
 });
 
 loyaltySystem.on('points_updated', ({ userId, points, action, newBalance }) => {
-  console.log(`✅ ${userId} ha recibido ${points} puntos por "${action}". Saldo actual: ${newBalance}`);
+  console.log(
+    `✅ ${userId} has received ${points} points for "${action}". Current balance: ${newBalance}`,
+  );
 });
 
-
-// 3. Procesa eventos de tu aplicación
+// 3. Process events from your application
 async function runDemo() {
-  console.log('--- Procesando una compra ---');
+  console.log('--- Processing a purchase ---');
   await loyaltySystem.processEvent({
     userId,
     event: 'purchase_completed',
     payload: { amount: 600, category: 'electronics' },
   });
 
-  console.log('\n--- Procesando una reseña ---');
+  console.log('\n--- Processing a review ---');
   await loyaltySystem.processEvent({
     userId,
     event: 'review_created',
@@ -184,34 +193,42 @@ async function runDemo() {
 runDemo();
 ```
 
-¡Y eso es todo! Has implementado un sistema de fidelización robusto y desacoplado de tu lógica de negocio principal.
+And that's it! You've implemented a robust loyalty system decoupled from your main business logic.
 
-## API Principal
+## Main API
 
 ### `new BetterLoyalty(adapter, rules)`
-Crea una nueva instancia del framework.
--   `adapter: IDatabaseAdapter`: Tu implementación para la comunicación con la base de datos.
--   `rules?: LoyaltyRule<any>[]`: Un array opcional con las reglas de tu negocio.
+
+Creates a new instance of the framework.
+
+- `adapter: IDatabaseAdapter`: Your implementation for database communication.
+- `rules?: LoyaltyRule<any>[]`: An optional array with your business rules.
 
 ### `loyaltySystem.processEvent(context)`
-El método principal para interactuar con el framework. Procesa un evento y ejecuta las reglas correspondientes.
--   `context: RuleContext<P>`: Un objeto con `userId`, `event` (string) y `payload` (tus datos).
+
+The main method to interact with the framework. Processes an event and executes the corresponding rules.
+
+- `context: RuleContext<P>`: An object with `userId`, `event` (string) and `payload` (your data).
 
 ### `loyaltySystem.on(eventName, handler)`
-Te suscribes a los eventos internos del framework.
--   `eventName: 'tier_changed' | 'points_updated'`
--   `handler`: Una función callback que recibe el payload del evento.
+
+Subscribe to the framework's internal events.
+
+- `eventName: 'tier_changed' | 'points_updated'`
+- `handler`: A callback function that receives the event payload.
 
 ### `loyaltySystem.points`
-Para operaciones manuales de puntos (menos común, pero disponible).
--   `.add(userId, points, action)`: Otorga puntos directamente.
--   `.subtract(userId, points, action)`: Canjea puntos directamente.
--   `.getBalance(userId)`: Consulta el saldo de un usuario.
 
-## Contribuciones
+For manual point operations (less common, but available).
 
-Las contribuciones son bienvenidas. Por favor, abre un *issue* para discutir cambios importantes o un *pull request* para correcciones.
+- `.add(userId, points, action)`: Award points directly.
+- `.subtract(userId, points, action)`: Redeem points directly.
+- `.getBalance(userId)`: Query a user's balance.
 
-## Licencia
+## Contributions
+
+Contributions are welcome. Please open an _issue_ to discuss major changes or a _pull request_ for fixes.
+
+## License
 
 [MIT](./LICENSE)
