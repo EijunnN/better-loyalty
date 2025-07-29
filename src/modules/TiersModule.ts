@@ -1,5 +1,3 @@
-// src/modules/TiersModule.ts
-
 import { UserId, Tier } from '../types/loyalty.types';
 import { IDatabaseAdapter } from '../interfaces/IDatabaseAdapter';
 

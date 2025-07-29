@@ -1,8 +1,10 @@
+// src/core/BetterLoyalty.ts
+// (El código interno de esta clase es casi idéntico al de v2, pero lo adaptamos para que lo use nuestro nuevo sistema)
 import mitt, { Emitter } from 'mitt';
 import { IDatabaseAdapter } from '../interfaces/IDatabaseAdapter';
 import { PointsModule } from '../modules/PointsModule';
 import { TiersModule } from '../modules/TiersModule';
-import { LoyaltyRule, RuleContext } from './RuleProcessor';
+import { RulesConfig } from './rule'; // <-- Usamos el nuevo tipo
 import { Tier, UserId } from '../types/loyalty.types';
 
 type LoyaltyEvents = {
@@ -15,43 +17,68 @@ type LoyaltyEvents = {
   tier_changed: { userId: UserId; from: Tier | null; to: Tier | null };
 };
 
-export class BetterLoyalty {
+interface LoyaltyRule {
+  condition?: (payload: unknown, userId: UserId) => boolean | Promise<boolean>;
+  action: (
+    payload: unknown,
+    userId: UserId,
+  ) =>
+    | { points: number; actionName?: string }
+    | Promise<{ points: number; actionName?: string }>;
+}
+
+// Esta clase ya no se exporta desde index.ts
+export class BetterLoyalty<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
   public readonly points: PointsModule;
   private readonly tiers: TiersModule;
   private readonly emitter: Emitter<LoyaltyEvents> = mitt<LoyaltyEvents>();
+  private readonly rules: Map<string, LoyaltyRule>;
 
   constructor(
     dbAdapter: IDatabaseAdapter,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private readonly rules: LoyaltyRule<any>[] = [],
+    config: RulesConfig<T> = {} as RulesConfig<T>,
   ) {
     this.points = new PointsModule(dbAdapter);
     this.tiers = new TiersModule(dbAdapter);
+    this.rules = new Map(Object.entries(config));
   }
 
-  async processEvent<P extends Record<string, unknown>>(
-    context: RuleContext<P>,
+  // El método se mantiene para la lógica interna
+  async trigger<P>(
+    eventName: string,
+    userId: UserId,
+    payload: P,
   ): Promise<void> {
-    for (const rule of this.rules) {
-      if (rule.event === context.event) {
-        const conditionMet = await Promise.resolve(rule.condition(context));
-        if (conditionMet) {
-          const result = await Promise.resolve(rule.action(context));
-          const updatedProfile = await this.points.add(
-            context.userId,
-            result.points,
-            result.actionName,
-          );
-          this.emitter.emit('points_updated', {
-            userId: context.userId,
-            points: result.points,
-            action: result.actionName,
-            newBalance: updatedProfile.points,
-          });
-        }
-      }
+    const rule = this.rules.get(eventName);
+    if (!rule) {
+      await this.evaluateTier(userId); // Aún evaluamos el tier por si hay operaciones manuales
+      return;
     }
-    await this.evaluateTier(context.userId);
+
+    const conditionMet = rule.condition
+      ? await Promise.resolve(rule.condition(payload, userId))
+      : true;
+
+    if (conditionMet) {
+      const result = await Promise.resolve(rule.action(payload, userId));
+      const actionName = result.actionName || eventName;
+
+      const updatedProfile = await this.points.add(
+        userId,
+        result.points,
+        actionName,
+      );
+      this.emitter.emit('points_updated', {
+        userId,
+        points: result.points,
+        action: actionName,
+        newBalance: updatedProfile.points,
+      });
+    }
+
+    await this.evaluateTier(userId);
   }
 
   private async evaluateTier(userId: UserId): Promise<void> {
@@ -66,6 +93,7 @@ export class BetterLoyalty {
     }
   }
 
+  // Los métodos de eventos se mantienen para uso avanzado
   on<Key extends keyof LoyaltyEvents>(
     event: Key,
     handler: (payload: LoyaltyEvents[Key]) => void,

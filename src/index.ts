@@ -1,18 +1,15 @@
+// src/index.ts
 
-export { BetterLoyalty } from './core/BetterLoyalty';
+// La API principal para el desarrollador
+export { createLoyaltySystem } from './core/system';
+export { defineRules } from './core/rule';
 
+// Tipos necesarios para la implementación
 export type { IDatabaseAdapter } from './interfaces/IDatabaseAdapter';
 export type { IBenefit } from './interfaces/IBenefit';
-
 export type {
   UserId,
   UserLoyaltyProfile,
   Tier,
   LoyaltyEvent,
 } from './types/loyalty.types';
-
-export type {
-  LoyaltyRule,
-  RuleContext,
-  RuleResult,
-} from './core/RuleProcessor';
